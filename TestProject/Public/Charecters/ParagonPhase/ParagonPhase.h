@@ -13,7 +13,6 @@ class USpringArmComponent;
 class UCameraComponent;
 class AItem;
 class UAnimMontage;
-
 //class UGroomComponent;
 
 
@@ -37,7 +36,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-	void GetEnemysInRange();
+	bool GetEnemysInRange();
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	virtual void Attack() override;
@@ -58,18 +57,27 @@ protected:
 	void Arm();
 	virtual void FocusTarget() override;
 	virtual void SetTargetCursorVisibility(bool Enabled) override;
+	virtual void PawnSeen(APawn* SeenPawn) override;
+	UFUNCTION(BlueprintCallable)
+		void AttachWeaponToBack();
+	UFUNCTION(BlueprintCallable)
+		void AttachWeaponToHand();
+	UFUNCTION(BlueprintCallable)
+		void FinishEquipping();
+	UFUNCTION(BlueprintCallable)
+		void HitReactEnd();
 
+	
 	TArray<AActor*> OutActors;
+	TArray<double> EnemyFoundDistance;
 	float SphereSize = 3000.f;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	TArray<AActor*> IgnoreActors;
-
-	UFUNCTION(BlueprintCallable)
-	void AttachWeaponToBack();
-	UFUNCTION(BlueprintCallable)
-	void AttachWeaponToHand();
-	UFUNCTION(BlueprintCallable)
-	void FinishEquipping();
+	TArray<AActor*> EnemysFound;
+	TArray<AActor*> PreviouslySelected;
+	AActor* SelectedTarget;
+	AActor* LastTargetSelected;
+	TMap <AActor*, double> EnemyAndDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 		UInputMappingContext* PhaseContext;
@@ -91,9 +99,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 		UInputAction* DodgeAction;
-
-	UFUNCTION(BlueprintCallable)
-	void HitReactEnd();
 
 private:
 

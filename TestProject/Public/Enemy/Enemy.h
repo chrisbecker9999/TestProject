@@ -8,7 +8,6 @@
 #include "Enemy.generated.h"
 
 class UHealthBarComponent;
-class UPawnSensingComponent;
 
 UCLASS()
 class TESTPROJECT_API AEnemy : public ABaseCharacter
@@ -70,18 +69,14 @@ private:
 	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
 	void SpawnDefaultWeapon();
-	
-	UFUNCTION()
-		void PawnSeen(APawn* SeenPawn);
+
+	virtual void PawnSeen(APawn* SeenPawn) override;
 
 	FTimerHandle PatrolTimer;
 	FTimerHandle AttackTimer;
 
 	UPROPERTY(VisibleAnywhere)
 		UHealthBarComponent* HealthBarWidget;
-
-	UPROPERTY(VisibleAnywhere)
-		UPawnSensingComponent* PawnSensing;
 
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class AWeapon> WeaponClass;

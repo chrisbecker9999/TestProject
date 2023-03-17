@@ -7,6 +7,7 @@
 #include "Interfaces/HitInterface.h"
 #include "ParagonPhase/CharacterTypes.h"
 #include "InputActionValue.h"
+#include "HUD/TargetCursorWidget.h"
 #include "BaseCharacter.generated.h"
 
 class UAnimMontage;
@@ -14,6 +15,7 @@ class UInputAction;
 class AWeapon;
 class UAttributeComponent;
 class UWidgetComponent;
+class UPawnSensingComponent;
 
 UCLASS()
 class TESTPROJECT_API ABaseCharacter : public ACharacter, public IHitInterface
@@ -55,6 +57,12 @@ protected:
 	bool IsAlive();
 	virtual void FocusTarget();
 	virtual void SetTargetCursorVisibility(bool Enabled);
+
+	UFUNCTION()
+		virtual void PawnSeen(APawn* SeenPawn);
+
+	UPROPERTY(VisibleAnywhere)
+		UPawnSensingComponent* PawnSensing;
 
 	UFUNCTION(BlueprintCallable)
 		FVector GetRotationWarpTarget();
@@ -130,12 +138,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		double WarpTargetDistance = 75.f;
-
-	AActor* SelectedTarget = nullptr;
-
-	TArray<AActor*> PreviouslySelected;
-
-	AActor* CurrentSelection = nullptr;
 
 private:
 

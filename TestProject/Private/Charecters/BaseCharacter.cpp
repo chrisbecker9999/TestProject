@@ -5,6 +5,7 @@
 #include "HUD/TargetCusorComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/PawnSensingComponent.h"
 #include "Components/WidgetComponent.h"
 
 // Sets default values
@@ -20,6 +21,9 @@ ABaseCharacter::ABaseCharacter()
 	TargetCursor->SetupAttachment(GetRootComponent());
 	TargetCursor->SetVisibility(true);
 
+	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	PawnSensing->SightRadius = 1000.f;
+	PawnSensing->SetPeripheralVisionAngle(45.f);
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -232,7 +236,6 @@ bool ABaseCharacter::IsAlive()
 
 void ABaseCharacter::FocusTarget()
 {
-	UWorld* World = GetWorld();
 	
 }
 
@@ -241,11 +244,16 @@ void ABaseCharacter::SetTargetCursorVisibility(bool Enabled)
 	TargetCursor->SetVisibility(Enabled);
 }
 
+void ABaseCharacter::PawnSeen(APawn* SeenPawn)
+{
+
+}
+
 FVector ABaseCharacter::GetRotationWarpTarget()
 {
 	if (CombatTarget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("I made it inside GetRotationWarpTarget()"));
+		//UE_LOG(LogTemp, Warning, TEXT("I made it inside GetRotationWarpTarget()"));
 		return CombatTarget->GetActorLocation();
 	}
 	return FVector();
@@ -254,7 +262,7 @@ FVector ABaseCharacter::GetRotationWarpTarget()
 FVector ABaseCharacter::GetTranslationWarpTarget()
 {
 	if (CombatTarget == nullptr) return FVector();
-	UE_LOG(LogTemp, Warning, TEXT("I made it inside GetTranslationWarpTarget()"));
+	//UE_LOG(LogTemp, Warning, TEXT("I made it inside GetTranslationWarpTarget()"));
 	const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
 	const FVector Location = GetActorLocation();
 	FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();

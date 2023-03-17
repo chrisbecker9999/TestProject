@@ -12,6 +12,8 @@
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Enemy/Enemy.h"
+#include "Perception/PawnSensingComponent.h"
 
 //#include "GroomComponent.h"
 
@@ -80,6 +82,8 @@ void AParagonPhase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hi
 void AParagonPhase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (PawnSensing)  PawnSensing->OnSeePawn.AddDynamic(this, &AParagonPhase::PawnSeen);
 	
 	Tags.Add(FName("EngageableTarget"));
 
@@ -93,20 +97,27 @@ void AParagonPhase::BeginPlay()
 	
 }
 
-void AParagonPhase::GetEnemysInRange()
+bool AParagonPhase::GetEnemysInRange()
 {
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
 	IgnoreActors.Init(this, 1);
 
 	UKismetSystemLibrary::SphereOverlapActors(GetWorld(), GetActorLocation(), 
 		SphereSize, ObjectTypes, nullptr, IgnoreActors, OutActors);
-
-	for (AActor* overlappedActor : OutActors)
+	if (!OutActors.IsEmpty())
 	{
-	UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *overlappedActor->GetName());
-	UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+		for (AActor* overlappedActor : OutActors)
+		{
+			//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *overlappedActor->GetName());
+			//UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+		}
+		return true;
 	}
-
+	else
+	{
+		return false;
+	}
+	
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), SphereSize, 12, FColor::Red, true, 10.0f);
 }
 
@@ -308,44 +319,123 @@ void AParagonPhase::Arm()
 void AParagonPhase::FocusTarget()
 {
 	GetEnemysInRange();
-
-	if (CurrentSelection)
-	{
-		SetTargetCursorVisibility(false);
-	}
 	
+	double EnemyDistance;
+	bool Found = false;
+	double min = -DBL_MAX;
 
-	//int32 LoopCount = 0;
-
-		for (AActor* A : OutActors)
+	for (AActor* A : OutActors)
+	{
+		if (EnemyAndDistance.Contains(A))
 		{
-			//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *A->GetName());
-			//DistanceToTarget = A->GetActorLocation() - GetActorLocation();
-			CurrentSelection = A;
+			TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
 
-			if (PreviouslySelected.Num() == OutActors.Num() && PreviouslySelected.Num() != 1 && OutActors.Num() != 1)
+			if (IsValid(E))
 			{
-				PreviouslySelected.Empty();
-				//UE_LOG(LogTemp, Log, TEXT("List empied"));
+				E->SetTargetCursorVisibility(false);
 			}
-			else if (!PreviouslySelected.Contains(CurrentSelection))
+
+			EnemyAndDistance.Remove(A);
+		}
+
+		EnemyDistance = A->GetActorLocation().X - GetActorLocation().X;
+		UE_LOG(LogTemp, Log, TEXT("My Location: %d"), GetActorLocation().X);
+		UE_LOG(LogTemp, Log, TEXT("Enemy Location: %d"), A->GetActorLocation().X);
+		UE_LOG(LogTemp, Log, TEXT("Enemy Name: %s"), *A->GetName());
+		UE_LOG(LogTemp, Log, TEXT("Enemy Distance from me: %d"), EnemyDistance);
+
+		EnemyAndDistance.Emplace(A, EnemyDistance);
+	}
+
+	for (auto& B : EnemyAndDistance)
+	{
+		UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+		UE_LOG(LogTemp, Log, TEXT("Enemy Distance: %d"), B.Value);
+		UE_LOG(LogTemp, Log, TEXT("Min Value: %d"), min);
+		if (B.Value < min) min = B.Value;
+	}
+
+	for (auto& C : EnemyAndDistance)
+	{
+		UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+		UE_LOG(LogTemp, Log, TEXT("C.key: %s"), *C.Key->GetName());
+		UE_LOG(LogTemp, Log, TEXT("C Distance: %d"), C.Value);
+		if (EnemyAndDistance.Contains(C.Key) && C.Value == min)
+		{
+			TObjectPtr<AEnemy> E = Cast<AEnemy>(C.Key);
+
+			if (IsValid(E))
 			{
-				SelectedTarget = CurrentSelection;
-				DrawDebugSphere(GetWorld(), SelectedTarget->GetActorLocation(), 100, 12, FColor::MakeRandomColor(), true, 10.0f);
-				PreviouslySelected.Add(SelectedTarget);
-				SetTargetCursorVisibility(true);
-				//UE_LOG(LogTemp, Log, TEXT("OutActors size: %i"), OutActors.Num());
-				//UE_LOG(LogTemp, Log, TEXT("PreviouslySelected: %i"), PreviouslySelected.Num());
-				return;
+				E->SetTargetCursorVisibility(true);
 			}
-			//LoopCount++;
-			//UE_LOG(LogTemp, Log, TEXT("OutActors size: %i"), LoopCount);
-		}	
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+	
+	//if (GetEnemysInRange())
+	//{
+	//	if (LastTargetSelected)
+	//	{
+	//		TObjectPtr<AEnemy> E = Cast<AEnemy>(LastTargetSelected);
+	//		if (IsValid(E))
+	//		{
+	//			E->SetTargetCursorVisibility(false);
+	//		}
+	//		
+	//	}
+
+	//	for (AActor* A : OutActors)
+	//	{
+	//		//Cast the AEnemy pointer to the current selected actor
+	//		TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
+	//		
+	//		SelectedTarget = A;
+
+	//		/*If the List of previously selected enemy's is full because we have selected each enemy once 
+	//		that's in range, Empty the list and select another enemy. Finally Enable the new enemy's target cursor*/
+	//		if (PreviouslySelected.Num() == OutActors.Num())
+	//		{							
+	//			PreviouslySelected.Empty();
+	//			PreviouslySelected.Add(SelectedTarget);
+	//			LastTargetSelected = SelectedTarget;
+	//			
+	//			if (IsValid(E))
+	//			{
+	//				E->SetTargetCursorVisibility(true);
+	//			}
+
+	//			return;
+	//		}
+	//		//If there's a target that hasn't been selected yet, add it to the array and enable it's target cursor
+	//		else if (!PreviouslySelected.Contains(SelectedTarget))
+	//		{				
+	//			PreviouslySelected.Add(SelectedTarget);
+	//			LastTargetSelected = SelectedTarget;
+
+	//			if (IsValid(E))
+	//			{
+	//				E->SetTargetCursorVisibility(true);
+	//			}	
+
+	//			return;
+	//		}			
+	//	}
+	//}
+	//return;
+
 }
 
 void AParagonPhase::SetTargetCursorVisibility(bool Enabled)
 {
 	Super::SetTargetCursorVisibility(Enabled);
+}
+
+void AParagonPhase::PawnSeen(APawn* SeenPawn)
+{
+	//OutActors.Emplace(SeenPawn);
+	//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), SeenPawn);
+	//UE_LOG(LogTemp, Log, TEXT("------------------------------------------------------------------------"));
 }
 
 void AParagonPhase::AttachWeaponToBack()
