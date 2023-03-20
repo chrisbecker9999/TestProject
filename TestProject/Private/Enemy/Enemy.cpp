@@ -6,6 +6,7 @@
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Perception/PawnSensingComponent.h"
+#include "Charecters/ParagonPhase/ParagonPhase.h"
 
 AEnemy::AEnemy()
 {
@@ -288,7 +289,9 @@ bool AEnemy::IsAttacking()
 }
 
 bool AEnemy::IsDead()
-{
+{	
+	SetTargetCursorVisibility(false);
+	
 	return EnemyState == EEnemyState::EES_Dead;
 }
 

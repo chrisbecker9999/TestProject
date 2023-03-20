@@ -26,9 +26,10 @@ public:
 	
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;	
+	virtual void SetTargetCursorVisibility(bool Enabled);
 
 protected:
-	//
+	
 	virtual void BeginPlay() override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual void Attack();
@@ -56,7 +57,6 @@ protected:
 	virtual bool CanAttack();
 	bool IsAlive();
 	virtual void FocusTarget();
-	virtual void SetTargetCursorVisibility(bool Enabled);
 
 	UFUNCTION()
 		virtual void PawnSeen(APawn* SeenPawn);
@@ -138,6 +138,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		double WarpTargetDistance = 75.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	AActor* SelectedTarget;
 
 private:
 

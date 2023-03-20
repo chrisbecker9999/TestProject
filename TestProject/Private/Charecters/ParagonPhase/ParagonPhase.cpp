@@ -108,8 +108,8 @@ bool AParagonPhase::GetEnemysInRange()
 	{
 		for (AActor* overlappedActor : OutActors)
 		{
-			//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *overlappedActor->GetName());
-			//UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
+			UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *overlappedActor->GetName());
+			UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
 		}
 		return true;
 	}
@@ -318,112 +318,46 @@ void AParagonPhase::Arm()
 
 void AParagonPhase::FocusTarget()
 {
-	GetEnemysInRange();
-	
-	double EnemyDistance;
-	bool Found = false;
-	double min = -DBL_MAX;
-
-	for (AActor* A : OutActors)
+	if (GetEnemysInRange())
 	{
-		if (EnemyAndDistance.Contains(A))
-		{
-			TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
+		//Populate the array of previously found enemies
+		FoundEnemies = OutActors;
 
+		if (SelectedTarget)
+		{
+			UE_LOG(LogTemp, Log, TEXT("In last selected if statement"));
+			TObjectPtr<AEnemy> E = Cast<AEnemy>(SelectedTarget);
 			if (IsValid(E))
 			{
+				UE_LOG(LogTemp, Log, TEXT("In IsValid if statement"));
+				//Disable the target cursor for the last selected enemy
 				E->SetTargetCursorVisibility(false);
-			}
-
-			EnemyAndDistance.Remove(A);
+				//Remove from enemy that was selected last time
+				if (FoundEnemies.Contains(SelectedTarget))
+				{
+					UE_LOG(LogTemp, Log, TEXT("In PreviouslySelected.Contains(LastTargetSelected)"));
+					FoundEnemies.Remove(SelectedTarget);
+				}
+			}			
 		}
-
-		EnemyDistance = A->GetActorLocation().X - GetActorLocation().X;
-		UE_LOG(LogTemp, Log, TEXT("My Location: %d"), GetActorLocation().X);
-		UE_LOG(LogTemp, Log, TEXT("Enemy Location: %d"), A->GetActorLocation().X);
-		UE_LOG(LogTemp, Log, TEXT("Enemy Name: %s"), *A->GetName());
-		UE_LOG(LogTemp, Log, TEXT("Enemy Distance from me: %d"), EnemyDistance);
-
-		EnemyAndDistance.Emplace(A, EnemyDistance);
-	}
-
-	for (auto& B : EnemyAndDistance)
-	{
-		UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
-		UE_LOG(LogTemp, Log, TEXT("Enemy Distance: %d"), B.Value);
-		UE_LOG(LogTemp, Log, TEXT("Min Value: %d"), min);
-		if (B.Value < min) min = B.Value;
-	}
-
-	for (auto& C : EnemyAndDistance)
-	{
-		UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
-		UE_LOG(LogTemp, Log, TEXT("C.key: %s"), *C.Key->GetName());
-		UE_LOG(LogTemp, Log, TEXT("C Distance: %d"), C.Value);
-		if (EnemyAndDistance.Contains(C.Key) && C.Value == min)
+		//Iterate through the list of enemies that are with in range
+		for (AActor* A : FoundEnemies)
 		{
-			TObjectPtr<AEnemy> E = Cast<AEnemy>(C.Key);
+			//Cast the AEnemy pointer to the current selected actor
+			UE_LOG(LogTemp, Log, TEXT("In AActor* A : PreviouslySelected"));
+			TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
+			//Set the current selected target
+			SelectedTarget = A;
 
 			if (IsValid(E))
 			{
+				UE_LOG(LogTemp, Log, TEXT("In AActor* A : PreviouslySelected - IsValid if statement"));
+				//Enable the target cursor for the current selected enemy
 				E->SetTargetCursorVisibility(true);
+				return;
 			}
 		}
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
-	
-	//if (GetEnemysInRange())
-	//{
-	//	if (LastTargetSelected)
-	//	{
-	//		TObjectPtr<AEnemy> E = Cast<AEnemy>(LastTargetSelected);
-	//		if (IsValid(E))
-	//		{
-	//			E->SetTargetCursorVisibility(false);
-	//		}
-	//		
-	//	}
-
-	//	for (AActor* A : OutActors)
-	//	{
-	//		//Cast the AEnemy pointer to the current selected actor
-	//		TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
-	//		
-	//		SelectedTarget = A;
-
-	//		/*If the List of previously selected enemy's is full because we have selected each enemy once 
-	//		that's in range, Empty the list and select another enemy. Finally Enable the new enemy's target cursor*/
-	//		if (PreviouslySelected.Num() == OutActors.Num())
-	//		{							
-	//			PreviouslySelected.Empty();
-	//			PreviouslySelected.Add(SelectedTarget);
-	//			LastTargetSelected = SelectedTarget;
-	//			
-	//			if (IsValid(E))
-	//			{
-	//				E->SetTargetCursorVisibility(true);
-	//			}
-
-	//			return;
-	//		}
-	//		//If there's a target that hasn't been selected yet, add it to the array and enable it's target cursor
-	//		else if (!PreviouslySelected.Contains(SelectedTarget))
-	//		{				
-	//			PreviouslySelected.Add(SelectedTarget);
-	//			LastTargetSelected = SelectedTarget;
-
-	//			if (IsValid(E))
-	//			{
-	//				E->SetTargetCursorVisibility(true);
-	//			}	
-
-	//			return;
-	//		}			
-	//	}
-	//}
-	//return;
-
 }
 
 void AParagonPhase::SetTargetCursorVisibility(bool Enabled)
@@ -436,6 +370,16 @@ void AParagonPhase::PawnSeen(APawn* SeenPawn)
 	//OutActors.Emplace(SeenPawn);
 	//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), SeenPawn);
 	//UE_LOG(LogTemp, Log, TEXT("------------------------------------------------------------------------"));
+}
+
+void AParagonPhase::SetSelectedTarget(AActor* Target)
+{
+	SelectedTarget = Target;
+}
+
+AActor* AParagonPhase::GetSelectedTarget()
+{
+	return SelectedTarget;
 }
 
 void AParagonPhase::AttachWeaponToBack()

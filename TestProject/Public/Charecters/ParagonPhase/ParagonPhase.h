@@ -28,6 +28,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter);
+	void SetSelectedTarget(AActor* Target);
+	AActor* GetSelectedTarget();
 	
 	FORCEINLINE virtual void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 	FORCEINLINE virtual void GetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
@@ -56,8 +58,9 @@ protected:
 	void Disarm();
 	void Arm();
 	virtual void FocusTarget() override;
-	virtual void SetTargetCursorVisibility(bool Enabled) override;
 	virtual void PawnSeen(APawn* SeenPawn) override;
+	virtual void SetTargetCursorVisibility(bool Enabled) override;
+
 	UFUNCTION(BlueprintCallable)
 		void AttachWeaponToBack();
 	UFUNCTION(BlueprintCallable)
@@ -69,13 +72,12 @@ protected:
 
 	
 	TArray<AActor*> OutActors;
-	TArray<double> EnemyFoundDistance;
-	float SphereSize = 3000.f;
+	//double& EnemyFoundDistance;
+	float SphereSize = 1000.f;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	TArray<AActor*> IgnoreActors;
 	TArray<AActor*> EnemysFound;
-	TArray<AActor*> PreviouslySelected;
-	AActor* SelectedTarget;
+	TArray<AActor*> FoundEnemies;
 	AActor* LastTargetSelected;
 	TMap <AActor*, double> EnemyAndDistance;
 
