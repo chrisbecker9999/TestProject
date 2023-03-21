@@ -58,7 +58,6 @@ protected:
 	void Disarm();
 	void Arm();
 	virtual void FocusTarget() override;
-	virtual void PawnSeen(APawn* SeenPawn) override;
 	virtual void SetTargetCursorVisibility(bool Enabled) override;
 
 	UFUNCTION(BlueprintCallable)
@@ -76,10 +75,10 @@ protected:
 	float SphereSize = 1000.f;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	TArray<AActor*> IgnoreActors;
-	TArray<AActor*> EnemysFound;
+	TArray<AActor*> PreviouslySelectedEnemys;
 	TArray<AActor*> FoundEnemies;
-	AActor* LastTargetSelected;
-	TMap <AActor*, double> EnemyAndDistance;
+
+	//TMap <AActor*, double> EnemyAndDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 		UInputMappingContext* PhaseContext;

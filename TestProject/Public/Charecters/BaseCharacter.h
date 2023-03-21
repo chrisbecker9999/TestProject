@@ -13,9 +13,8 @@
 class UAnimMontage;
 class UInputAction;
 class AWeapon;
-class UAttributeComponent;
 class UWidgetComponent;
-class UPawnSensingComponent;
+class UAttributeComponent;
 
 UCLASS()
 class TESTPROJECT_API ABaseCharacter : public ACharacter, public IHitInterface
@@ -58,11 +57,8 @@ protected:
 	bool IsAlive();
 	virtual void FocusTarget();
 
-	UFUNCTION()
-		virtual void PawnSeen(APawn* SeenPawn);
-
 	UPROPERTY(VisibleAnywhere)
-		UPawnSensingComponent* PawnSensing;
+		UWidgetComponent* TargetCursor;
 
 	UFUNCTION(BlueprintCallable)
 		FVector GetRotationWarpTarget();
@@ -78,9 +74,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		virtual void AttackEnd();
-
-	UPROPERTY(VisibleAnywhere)
-		UWidgetComponent* TargetCursor;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		AWeapon* EquippedWeapon;

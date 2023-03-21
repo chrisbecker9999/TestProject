@@ -5,13 +5,12 @@
 #include "HUD/TargetCusorComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Perception/PawnSensingComponent.h"
 #include "Components/WidgetComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attributes"));
@@ -20,10 +19,6 @@ ABaseCharacter::ABaseCharacter()
 	TargetCursor = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetCursor"));
 	TargetCursor->SetupAttachment(GetRootComponent());
 	TargetCursor->SetVisibility(true);
-
-	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
-	PawnSensing->SightRadius = 1000.f;
-	PawnSensing->SetPeripheralVisionAngle(45.f);
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -244,10 +239,6 @@ void ABaseCharacter::SetTargetCursorVisibility(bool Enabled)
 	TargetCursor->SetVisibility(Enabled);
 }
 
-void ABaseCharacter::PawnSeen(APawn* SeenPawn)
-{
-
-}
 
 FVector ABaseCharacter::GetRotationWarpTarget()
 {

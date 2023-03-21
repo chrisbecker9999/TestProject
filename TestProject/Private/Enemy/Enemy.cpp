@@ -7,6 +7,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Charecters/ParagonPhase/ParagonPhase.h"
+#include "Perception/PawnSensingComponent.h"
 
 AEnemy::AEnemy()
 {
@@ -26,6 +27,10 @@ AEnemy::AEnemy()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	PawnSensing->SightRadius = 1000.f;
+	PawnSensing->SetPeripheralVisionAngle(45.f);
 
 }
 

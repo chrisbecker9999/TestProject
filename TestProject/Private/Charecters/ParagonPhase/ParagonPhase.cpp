@@ -82,8 +82,6 @@ void AParagonPhase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hi
 void AParagonPhase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (PawnSensing)  PawnSensing->OnSeePawn.AddDynamic(this, &AParagonPhase::PawnSeen);
 	
 	Tags.Add(FName("EngageableTarget"));
 
@@ -105,12 +103,7 @@ bool AParagonPhase::GetEnemysInRange()
 	UKismetSystemLibrary::SphereOverlapActors(GetWorld(), GetActorLocation(), 
 		SphereSize, ObjectTypes, nullptr, IgnoreActors, OutActors);
 	if (!OutActors.IsEmpty())
-	{
-		for (AActor* overlappedActor : OutActors)
-		{
-			UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), *overlappedActor->GetName());
-			UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------------------------------"));
-		}
+	{		
 		return true;
 	}
 	else
@@ -332,11 +325,15 @@ void AParagonPhase::FocusTarget()
 				UE_LOG(LogTemp, Log, TEXT("In IsValid if statement"));
 				//Disable the target cursor for the last selected enemy
 				E->SetTargetCursorVisibility(false);
-				//Remove from enemy that was selected last time
-				if (FoundEnemies.Contains(SelectedTarget))
+				//Iterate through the list of previously selected targets
+				for (AActor* A : PreviouslySelectedEnemys)
 				{
-					UE_LOG(LogTemp, Log, TEXT("In PreviouslySelected.Contains(LastTargetSelected)"));
-					FoundEnemies.Remove(SelectedTarget);
+					//Remove from enemy that was selected last time
+					if (FoundEnemies.Contains(A))
+					{
+						UE_LOG(LogTemp, Log, TEXT("In PreviouslySelected.Contains(LastTargetSelected)"));
+						FoundEnemies.Remove(A);						
+					}
 				}
 			}			
 		}
@@ -354,6 +351,7 @@ void AParagonPhase::FocusTarget()
 				UE_LOG(LogTemp, Log, TEXT("In AActor* A : PreviouslySelected - IsValid if statement"));
 				//Enable the target cursor for the current selected enemy
 				E->SetTargetCursorVisibility(true);
+				PreviouslySelectedEnemys.Emplace(SelectedTarget);
 				return;
 			}
 		}
@@ -363,13 +361,6 @@ void AParagonPhase::FocusTarget()
 void AParagonPhase::SetTargetCursorVisibility(bool Enabled)
 {
 	Super::SetTargetCursorVisibility(Enabled);
-}
-
-void AParagonPhase::PawnSeen(APawn* SeenPawn)
-{
-	//OutActors.Emplace(SeenPawn);
-	//UE_LOG(LogTemp, Log, TEXT("OverlappedActor: %s"), SeenPawn);
-	//UE_LOG(LogTemp, Log, TEXT("------------------------------------------------------------------------"));
 }
 
 void AParagonPhase::SetSelectedTarget(AActor* Target)
