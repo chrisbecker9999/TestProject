@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Charecters/ParagonPhase/ParagonPhase.h"
+#include "Characters/ParagonPhase/ParagonPhase.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -314,53 +314,114 @@ void AParagonPhase::FocusTarget()
 	if (GetEnemysInRange())
 	{
 		//Populate the array of previously found enemies
-		FoundEnemies = OutActors;
+		FoundEnemys = OutActors;
 
 		if (SelectedTarget)
 		{
-			UE_LOG(LogTemp, Log, TEXT("In last selected if statement"));
 			TObjectPtr<AEnemy> E = Cast<AEnemy>(SelectedTarget);
-			if (IsValid(E))
-			{
-				UE_LOG(LogTemp, Log, TEXT("In IsValid if statement"));
-				//Disable the target cursor for the last selected enemy
-				E->SetTargetCursorVisibility(false);
-				//Iterate through the list of previously selected targets
-				for (AActor* A : PreviouslySelectedEnemys)
-				{
-					//Remove from enemy that was selected last time
-					if (FoundEnemies.Contains(A))
-					{
-						UE_LOG(LogTemp, Log, TEXT("In PreviouslySelected.Contains(LastTargetSelected)"));
-						FoundEnemies.Remove(A);						
-					}
-				}
-			}			
-		}
-		//Iterate through the list of enemies that are with in range
-		for (AActor* A : FoundEnemies)
-		{
-			//Cast the AEnemy pointer to the current selected actor
-			UE_LOG(LogTemp, Log, TEXT("In AActor* A : PreviouslySelected"));
-			TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
-			//Set the current selected target
-			SelectedTarget = A;
 
 			if (IsValid(E))
 			{
-				UE_LOG(LogTemp, Log, TEXT("In AActor* A : PreviouslySelected - IsValid if statement"));
-				//Enable the target cursor for the current selected enemy
-				E->SetTargetCursorVisibility(true);
-				PreviouslySelectedEnemys.Emplace(SelectedTarget);
-				return;
+				//Disable the target cursor for the last selected enemy
+				E->SetTargetCursorVisibility(false);
+
+				//Determine if all enenmys within range were previously targeted, if so empty the previously targeted array
+				int32 Counter = 0;
+				for (AActor* A : FoundEnemys)
+				{
+					if (PreviouslySelectedEnemys.Contains(A))
+					{
+						Counter++;
+					}
+				}
+
+				if (Counter == FoundEnemys.Num())
+				{
+					PreviouslySelectedEnemys.Empty();
+				}
+				else if (PreviouslySelectedEnemys == FoundEnemys)
+				{
+					PreviouslySelectedEnemys.Empty();
+				}
+
+				//Iterate through the list of previously selected targets
+				for (AActor* A : PreviouslySelectedEnemys)
+				{					//Remove enemy that was selected last time
+					if (FoundEnemys.Contains(A))
+					{
+						FoundEnemys.Remove(A);
+					}
+				}
+			}
+		}
+
+		double EnemyRange = 0.0;
+		double Min = DBL_MIN;
+		double Max = DBL_MAX;
+
+		TMap <AActor*, double> EnemyAndDistance;
+
+		//Iterate through the list of enemies that are with in range
+		for (AActor* A : FoundEnemys)
+		{
+			TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
+
+			EnemyRange = (GetActorLocation() - A->GetActorLocation()).Size();
+
+			if (EnemyAndDistance.Contains(A))
+			{
+				EnemyAndDistance.Remove(A);
+			}
+
+			EnemyAndDistance.Emplace(A, EnemyRange);
+
+		}
+		//Iterate through the list of enemy distances to find which is the closest
+		for (auto& Elem : EnemyAndDistance)
+		{
+			if (Elem.Value > Min) 
+			{
+				Max = Elem.Value;
+			}
+			else
+			{
+				Min = Elem.Value;
+			}
+		}
+		
+		//Set the current selected target
+		for (AActor* A : FoundEnemys)
+		{
+			for (auto& Elem : EnemyAndDistance)
+			{				
+				//Find which enemy is the closest and select them
+				if (EnemyAndDistance.Contains(A) && Elem.Value == Min || EnemyAndDistance.Contains(A) && Elem.Value == Max)
+				{
+					SelectedTarget = A;
+					TObjectPtr<AEnemy> E = Cast<AEnemy>(A);
+
+					if (IsValid(E))
+					{
+						//Enable the target cursor for the current selected enemy
+						E->SetTargetCursorVisibility(true);
+						PhaseCombatTarget = SelectedTarget;
+						PreviouslySelectedEnemys.Emplace(SelectedTarget);
+						return;
+					}
+				}				
 			}
 		}
 	}
 }
 
-void AParagonPhase::SetTargetCursorVisibility(bool Enabled)
+FVector AParagonPhase::GetRotationWarpTarget(AActor* Actor)
 {
-	Super::SetTargetCursorVisibility(Enabled);
+	return Super::GetRotationWarpTarget(Actor);
+}
+
+FVector AParagonPhase::GetTranslationWarpTarget(AActor* Actor)
+{
+	return Super::GetTranslationWarpTarget(Actor);
 }
 
 void AParagonPhase::SetSelectedTarget(AActor* Target)
@@ -398,3 +459,4 @@ void AParagonPhase::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 }
+

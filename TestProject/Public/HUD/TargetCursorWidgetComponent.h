@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/WidgetComponent.h"
-#include "TargetCusorComponent.generated.h"
+#include "TargetCursorWidgetComponent.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TESTPROJECT_API UTargetCusorComponent : public UWidgetComponent
+class TESTPROJECT_API UTargetCursorWidgetComponent : public UWidgetComponent
 {
 	GENERATED_BODY()
 	

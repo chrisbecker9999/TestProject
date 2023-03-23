@@ -14,10 +14,12 @@ class TESTPROJECT_API UTargetCursorWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-//public:
-//	/*Must have the same name that it has in the WBP_HealthBar blueprint
-//	class we created in UE5. File: Blueprints/WBP_HealthBar
-//	Hierarchy: WBP_HealthBar->Canvas Panel->HealthBar which is a progress bar widget */
-//	UPROPERTY(meta = (BindWidget))
-//		class UWidgetComponent* TargetCursor;
+public:
+	UPROPERTY(meta = (BindWidget))
+		class UImage* EnemyTargetCursor;
+
+protected:
+
+	virtual void NativeConstruct() override;
+
 };

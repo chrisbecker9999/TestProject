@@ -4,7 +4,7 @@
 #include "Items/Item.h"
 #include "TestProject/DebugMacros.h"
 #include "Components/SphereComponent.h"
-#include "Charecters/ParagonPhase/ParagonPhase.h"
+#include "Characters/ParagonPhase/ParagonPhase.h"
 #include "NiagaraComponent.h"
 
 

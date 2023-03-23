@@ -3,3 +3,8 @@
 
 #include "HUD/TargetCursorWidget.h"
 
+
+void UTargetCursorWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+}

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/Item.h"
-#include "Charecters/ParagonPhase/CharacterTypes.h"
+#include "Characters/ParagonPhase/CharacterTypes.h"
 #include "Weapon.generated.h"
 
 class USoundBase;

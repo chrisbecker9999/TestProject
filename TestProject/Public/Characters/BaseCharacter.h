@@ -7,14 +7,13 @@
 #include "Interfaces/HitInterface.h"
 #include "ParagonPhase/CharacterTypes.h"
 #include "InputActionValue.h"
-#include "HUD/TargetCursorWidget.h"
 #include "BaseCharacter.generated.h"
 
 class UAnimMontage;
 class UInputAction;
 class AWeapon;
-class UWidgetComponent;
 class UAttributeComponent;
+class UTargetCursorWidgetComponent;
 
 UCLASS()
 class TESTPROJECT_API ABaseCharacter : public ACharacter, public IHitInterface
@@ -57,14 +56,10 @@ protected:
 	bool IsAlive();
 	virtual void FocusTarget();
 
-	UPROPERTY(VisibleAnywhere)
-		UWidgetComponent* TargetCursor;
-
 	UFUNCTION(BlueprintCallable)
-		FVector GetRotationWarpTarget();
-
+		virtual FVector GetRotationWarpTarget(AActor* Actor);
 	UFUNCTION(BlueprintCallable)
-		FVector GetTranslationWarpTarget();
+		virtual FVector GetTranslationWarpTarget(AActor* Actor);
 
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 		ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
@@ -74,6 +69,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		virtual void AttackEnd();
+
+	UPROPERTY(VisibleAnywhere)
+		UTargetCursorWidgetComponent* TargetCursor;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		AWeapon* EquippedWeapon;
@@ -133,7 +131,7 @@ protected:
 		double WarpTargetDistance = 75.f;
 
 	UPROPERTY(BlueprintReadOnly)
-	AActor* SelectedTarget;
+		AActor* SelectedTarget;
 
 private:
 

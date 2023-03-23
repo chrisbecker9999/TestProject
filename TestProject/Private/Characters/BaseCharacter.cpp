@@ -1,11 +1,11 @@
-#include "Charecters/BaseCharacter.h"
+#include "Characters/BaseCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Components/AttributeComponent.h"
-#include "HUD/TargetCusorComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/WidgetComponent.h"
+#include "Components/SceneComponent.h"
+#include "HUD/TargetCursorWidgetComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -16,10 +16,10 @@ ABaseCharacter::ABaseCharacter()
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attributes"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
-	TargetCursor = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetCursor"));
+	TargetCursor = CreateDefaultSubobject<UTargetCursorWidgetComponent>(TEXT("TargetCursor"));
 	TargetCursor->SetupAttachment(GetRootComponent());
-	TargetCursor->SetVisibility(true);
 }
+
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
@@ -236,25 +236,25 @@ void ABaseCharacter::FocusTarget()
 
 void ABaseCharacter::SetTargetCursorVisibility(bool Enabled)
 {
-	TargetCursor->SetVisibility(Enabled);
+
 }
 
 
-FVector ABaseCharacter::GetRotationWarpTarget()
+FVector ABaseCharacter::GetRotationWarpTarget(AActor* Actor)
 {
-	if (CombatTarget)
+	if (Actor)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("I made it inside GetRotationWarpTarget()"));
-		return CombatTarget->GetActorLocation();
+		return Actor->GetActorLocation();
 	}
 	return FVector();
 }
 
-FVector ABaseCharacter::GetTranslationWarpTarget()
+FVector ABaseCharacter::GetTranslationWarpTarget(AActor* Actor)
 {
-	if (CombatTarget == nullptr) return FVector();
+	if (Actor == nullptr) return FVector();
 	//UE_LOG(LogTemp, Warning, TEXT("I made it inside GetTranslationWarpTarget()"));
-	const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
+	const FVector CombatTargetLocation = Actor->GetActorLocation();
 	const FVector Location = GetActorLocation();
 	FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();
 	TargetToMe *= WarpTargetDistance;

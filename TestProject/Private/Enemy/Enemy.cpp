@@ -6,8 +6,8 @@
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Perception/PawnSensingComponent.h"
-#include "Charecters/ParagonPhase/ParagonPhase.h"
-#include "Perception/PawnSensingComponent.h"
+#include "Characters/ParagonPhase/ParagonPhase.h"
+#include "HUD/TargetCursorWidgetComponent.h"
 
 AEnemy::AEnemy()
 {
@@ -75,7 +75,7 @@ void AEnemy::Destroyed()
 
 void AEnemy::SetTargetCursorVisibility(bool Enabled)
 {
-	Super::SetTargetCursorVisibility(Enabled);
+	TargetCursor->SetVisibility(Enabled);
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
@@ -95,6 +95,7 @@ void AEnemy::BeginPlay()
 	if (PawnSensing)  PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
+	SetTargetCursorVisibility(false);
 }
 
 void AEnemy::WaitForNavMeshLoad()
@@ -109,6 +110,7 @@ void AEnemy::Die()
 	PlayDeathMontage();
 	ClearAttackTimer();
 	HideHealthBar();
+	SetTargetCursorVisibility(false);
 	DisableCapsule();
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -168,6 +170,16 @@ int32 AEnemy::PlayDeathMontage()
 	}
 
 	return Selection;
+}
+
+FVector AEnemy::GetRotationWarpTarget(AActor* Actor)
+{
+	return Super::GetRotationWarpTarget(Actor);
+}
+
+FVector AEnemy::GetTranslationWarpTarget(AActor* Actor)
+{
+	return Super::GetTranslationWarpTarget(Actor);
 }
 
 void AEnemy::InitializeEnemy()
@@ -295,8 +307,6 @@ bool AEnemy::IsAttacking()
 
 bool AEnemy::IsDead()
 {	
-	SetTargetCursorVisibility(false);
-	
 	return EnemyState == EEnemyState::EES_Dead;
 }
 

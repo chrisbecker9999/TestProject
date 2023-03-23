@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Charecters/BaseCharacter.h"
+#include "Characters/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "ParagonPhase.generated.h"
 
@@ -58,7 +58,8 @@ protected:
 	void Disarm();
 	void Arm();
 	virtual void FocusTarget() override;
-	virtual void SetTargetCursorVisibility(bool Enabled) override;
+	virtual FVector GetRotationWarpTarget(AActor* Actor) override;
+	virtual FVector GetTranslationWarpTarget(AActor* Actor) override;
 
 	UFUNCTION(BlueprintCallable)
 		void AttachWeaponToBack();
@@ -69,14 +70,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void HitReactEnd();
 
-	
 	TArray<AActor*> OutActors;
-	//double& EnemyFoundDistance;
-	float SphereSize = 1000.f;
+	float SphereSize = 3000.f;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	TArray<AActor*> IgnoreActors;
 	TArray<AActor*> PreviouslySelectedEnemys;
-	TArray<AActor*> FoundEnemies;
+	TArray<AActor*> FoundEnemys;
 
 	//TMap <AActor*, double> EnemyAndDistance;
 
@@ -100,6 +99,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 		UInputAction* DodgeAction;
+
+	UPROPERTY(BlueprintReadOnly)
+		AActor* PhaseCombatTarget;
 
 private:
 

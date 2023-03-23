@@ -2,7 +2,7 @@
 
 
 #include "Items/Weapons/Weapon.h"
-#include "Charecters/ParagonPhase/ParagonPhase.h"
+#include "Characters/ParagonPhase/ParagonPhase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"

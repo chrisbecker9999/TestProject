@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Charecters/BaseCharacter.h"
-#include "Charecters/ParagonPhase/CharacterTypes.h"
+#include "Characters/BaseCharacter.h"
+#include "Characters/ParagonPhase/CharacterTypes.h"
 #include "Enemy.generated.h"
 
 class UHealthBarComponent;
@@ -37,6 +37,8 @@ protected:
 	virtual void AttackEnd() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual int32 PlayDeathMontage() override;
+	virtual FVector GetRotationWarpTarget(AActor* Actor) override;
+	virtual FVector GetTranslationWarpTarget(AActor* Actor) override;
 
 	UPROPERTY(BlueprintReadOnly)
 		TEnumAsByte<EDeathPose> DeathPose;
