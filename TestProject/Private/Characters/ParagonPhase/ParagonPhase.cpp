@@ -8,12 +8,18 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Components/AttributeComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Enemy/Enemy.h"
 #include "Perception/PawnSensingComponent.h"
+#include "HUD/PhaseHUD.h"
+#include "HUD/PhaseOverlay.h"
+#include "Items/Soul.h"
+#include "Items/Treasure.h"
+#include "Items/HealthPotion.h"
 
 //#include "GroomComponent.h"
 
@@ -22,8 +28,7 @@ AParagonPhase::AParagonPhase()
 {
  	// Set this character to call Tick() every frame. You can turn this off to improve performance if you don't need it.
 	// Set this pawn to call Tick() every frame. You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
+	PrimaryActorTick.bCanEverTick = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
@@ -42,12 +47,17 @@ AParagonPhase::AParagonPhase()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
+	//UE_LOG(LogTemp, Warning, TEXT("Avg of 1 and 3: %d"), AvgInt);
 }
 
 void AParagonPhase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (Attributes && PhaseOverlay)
+	{
+		Attributes->RegenStamina(DeltaTime);
+		PhaseOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
 }
 
 void AParagonPhase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -72,11 +82,62 @@ void AParagonPhase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 }
 
+void AParagonPhase::Jump()
+{
+	if (IsUnoccupied())
+	{
+		Super::Jump();
+	}
+}
+
 void AParagonPhase::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	ActionState = EActionState::EAS_HitReaction;
+	if (Attributes && Attributes->GetHealthPercent() > 0.f)
+	{
+		ActionState = EActionState::EAS_HitReaction;
+	}
+	
+}
+
+float AParagonPhase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	HandleDamage(DamageAmount);
+	SetHUDHealth();
+	return DamageAmount;
+}
+
+void AParagonPhase::SetOverlappingItem(AItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void AParagonPhase::AddSouls(ASoul* Soul)
+{
+	if (Attributes && PhaseOverlay)
+	{
+		Attributes->AddSouls(Soul->GetSouls());
+		PhaseOverlay->SetSouls(Attributes->GetSouls());
+	}
+}
+
+void AParagonPhase::AddGold(ATreasure* Treasure)
+{
+	if (Attributes && PhaseOverlay)
+	{
+		Attributes->AddGold(Treasure->GetGold());
+		PhaseOverlay->SetGold(Attributes->GetGold());
+	}
+}
+
+void AParagonPhase::AddHealth(AHealthPotion* Health)
+{
+	if (Attributes && PhaseOverlay)
+	{
+		Attributes->AddHealth(Health->GetHealth());
+		PhaseOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
 
 void AParagonPhase::BeginPlay()
@@ -85,14 +146,7 @@ void AParagonPhase::BeginPlay()
 	
 	Tags.Add(FName("EngageableTarget"));
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(PhaseContext, 0);
-		}
-	}
-	
+	Initilize();
 }
 
 bool AParagonPhase::GetEnemysInRange()
@@ -215,15 +269,15 @@ void AParagonPhase::EKeyPressed()
 
 void AParagonPhase::Dodge()
 {
-
-}
-
-void AParagonPhase::Jump()
-{
-	
-		Super::Jump();
-	
-
+	if (IsOccupied() || !HasEnoughStamina()) return;
+	PlayDodgeMontage();
+	ActionState = EActionState::EAS_Dodge;
+	if (Attributes && PhaseOverlay)
+	{
+		Attributes->UseStamina(Attributes->GetDodgeCost());
+		PhaseOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("Dodge function triggered!"));
 }
 
 void AParagonPhase::EquipWeapon(AWeapon* Weapon)
@@ -237,7 +291,7 @@ void AParagonPhase::EquipWeapon(AWeapon* Weapon)
 	}
 	else if (EquippedWeapon->GetWeaponType() == AWeaponType::AWT_TwoHanded)
 	{
-		EquippedWeapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
+		EquippedWeapon->Equip(GetMesh(), FName("TwoHandSocket"), this, this);
 		CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
 	}
 	else if (EquippedWeapon->GetWeaponType() == AWeaponType::AWT_Spell)
@@ -252,6 +306,12 @@ void AParagonPhase::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	AParagonPhase::GetCapsuleComponent()->SetWorldLocation(GetActorLocation());
+}
+
+void AParagonPhase::DodgeEnd()
+{
+	Super::DodgeEnd();
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 bool AParagonPhase::CanAttack()
@@ -269,6 +329,23 @@ void AParagonPhase::PlayEquipMontage(const FName& SectionName)
 		AnimInstance->Montage_Play(EquipMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
 	}
+}
+
+void AParagonPhase::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+	DisableMeshCollision();
+}
+
+bool AParagonPhase::HasEnoughStamina()
+{
+	return Attributes && Attributes->GetStamina() > Attributes->GetDodgeCost();
+}
+
+bool AParagonPhase::IsOccupied()
+{
+	return ActionState != EActionState::EAS_Unoccupied;
 }
 	
 bool AParagonPhase::CanDisarm()
@@ -458,5 +535,43 @@ void AParagonPhase::FinishEquipping()
 void AParagonPhase::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+}
+
+bool AParagonPhase::IsUnoccupied()
+{
+	return ActionState == EActionState::EAS_Unoccupied;
+}
+
+void AParagonPhase::Initilize()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		APhaseHUD* PhaseHUD = Cast<APhaseHUD>(PlayerController->GetHUD());
+		if (PhaseHUD)
+		{
+			PhaseOverlay = PhaseHUD->GetPhaseOverlay();
+			if (PhaseOverlay && Attributes)
+			{
+				PhaseOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+				PhaseOverlay->SetStaminaBarPercent(1.f);
+				PhaseOverlay->SetGold(0);
+				PhaseOverlay->SetSouls(0);
+			}
+		}
+
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(PhaseContext, 0);
+		}
+	}
+}
+
+void AParagonPhase::SetHUDHealth()
+{
+	if (PhaseOverlay)
+	{
+		PhaseOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
 

@@ -20,7 +20,6 @@ ABaseCharacter::ABaseCharacter()
 	TargetCursor->SetupAttachment(GetRootComponent());
 }
 
-
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -45,10 +44,16 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 
 void ABaseCharacter::Attack()
 {
+	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead")))
+	{
+		CombatTarget = nullptr;
+	}
 }
 
 void ABaseCharacter::Die()
 {
+	Tags.Add(FName("Dead"));
+	PlayDeathMontage();
 }
 
 void ABaseCharacter::AbilityOne()
@@ -184,6 +189,7 @@ void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& Sect
 		AnimInstance->Montage_Play(Montage);
 		AnimInstance->Montage_JumpToSection(SectionName, Montage);
 	}
+	
 }
 
 int32 ABaseCharacter::PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames)
@@ -202,7 +208,20 @@ int32 ABaseCharacter::PlayAttackMontage(UAnimMontage* Montage, TArray<FName> Sec
 
 int32 ABaseCharacter::PlayDeathMontage()
 {
-	return PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	const int32 Selection = PlayRandomMontageSection(DeathMontage, DeathMontageSections);
+	TEnumAsByte<EDeathPose> Pose(Selection);
+	if (Pose < EDeathPose::EDP_MAX)
+	{
+		DeathPose = Pose;
+	}
+
+	return Selection;
+}
+
+void ABaseCharacter::PlayDodgeMontage()
+{
+	PlayMontageSection(DodgeMontage, FName("FrontDodge"));
+	UE_LOG(LogTemp, Warning, TEXT("PlayDodgeMontage triggered!"));
 }
 
 void ABaseCharacter::StopAttackMontage()
@@ -234,11 +253,15 @@ void ABaseCharacter::FocusTarget()
 	
 }
 
+void ABaseCharacter::DisableMeshCollision()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
 void ABaseCharacter::SetTargetCursorVisibility(bool Enabled)
 {
 
 }
-
 
 FVector ABaseCharacter::GetRotationWarpTarget(AActor* Actor)
 {
@@ -263,6 +286,10 @@ FVector ABaseCharacter::GetTranslationWarpTarget(AActor* Actor)
 }
 
 void ABaseCharacter::AttackEnd()
+{
+}
+
+void ABaseCharacter::DodgeEnd()
 {
 }
 

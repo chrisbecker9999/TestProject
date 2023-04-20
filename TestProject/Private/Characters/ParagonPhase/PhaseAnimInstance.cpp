@@ -28,5 +28,7 @@ void UPhaseAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		GroundSpeed = UKismetMathLibrary::VSizeXY(PhaseCharacterMovement->Velocity);
 		IsFalling = PhaseCharacterMovement->IsFalling();
 		CharacterState = PhaseCharacter->GetCharacterState();
+		ActionState = PhaseCharacter->GetActionState();
+		DeathPose = PhaseCharacter->GetDeathPose();
 	}
 }

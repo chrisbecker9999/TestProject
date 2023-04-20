@@ -8,6 +8,8 @@
 #include "Perception/PawnSensingComponent.h"
 #include "Characters/ParagonPhase/ParagonPhase.h"
 #include "HUD/TargetCursorWidgetComponent.h"
+#include "Items/Soul.h"
+#include "Items/HealthPotion.h"
 
 AEnemy::AEnemy()
 {
@@ -106,8 +108,9 @@ void AEnemy::WaitForNavMeshLoad()
 
 void AEnemy::Die()
 {
+	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
-	PlayDeathMontage();
+	DisableMeshCollision();
 	ClearAttackTimer();
 	HideHealthBar();
 	SetTargetCursorVisibility(false);
@@ -115,13 +118,52 @@ void AEnemy::Die()
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	//GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SpawnSoul();
+	SpawnHealthPotion();
+}
+
+void AEnemy::SpawnSoul()
+{
+	UWorld* World = GetWorld();
+	if (World && SoulClass && Attributes)
+	{
+		ASoul* SpawnedSoul = World->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedSoul)
+		{
+			SpawnedSoul->SetSouls(Attributes->GetSouls());
+		}
+	}
+}
+
+void AEnemy::SpawnHealthPotion()
+{
+	int32 ranNum = 2;//FMath::RandRange(1, 3);
+	if (ranNum == 2)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Number is 2"));
+		UWorld* World = GetWorld();
+		if (World && HealthPotionClass && Attributes)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Next"));
+			FVector Offset = GetActorLocation();
+			Offset.X += 100.f;
+			Offset.Y += 100.f;
+			AHealthPotion* SpawnedHealthPotion = World->SpawnActor<AHealthPotion>(HealthPotionClass, Offset, GetActorRotation());
+			if (SpawnedHealthPotion)
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("SpawnPotion"));
+				SpawnedHealthPotion->SetHealth(Attributes->GetHealth());
+			}
+		}
+	}
 }
 
 void AEnemy::Attack()
 {
-	EnemyState = EEnemyState::EES_Engaged;
 	Super::Attack();
+	if (CombatTarget == nullptr) return;
+	
+	EnemyState = EEnemyState::EES_Engaged;
 	
 	if (CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
 	{
@@ -158,18 +200,6 @@ void AEnemy::HandleDamage(float DamageAmount)
 	{
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 	}
-}
-
-int32 AEnemy::PlayDeathMontage()
-{
-	const int32 Selection = Super::PlayDeathMontage();
-	TEnumAsByte<EDeathPose> Pose(Selection);
-	if (Pose < EDeathPose::EDP_MAX)
-	{
-		DeathPose = Pose;
-	}
-
-	return Selection;
 }
 
 FVector AEnemy::GetRotationWarpTarget(AActor* Actor)
@@ -395,7 +425,8 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&
 		EnemyState < EEnemyState::EES_Chasing&&
-		SeenPawn->ActorHasTag(FName("EngageableTarget"));
+		SeenPawn->ActorHasTag(FName("EngageableTarget")) &&
+		!SeenPawn->ActorHasTag(FName("Dead"));
 
 	if (bShouldChaseTarget)
 	{

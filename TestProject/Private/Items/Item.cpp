@@ -4,8 +4,10 @@
 #include "Items/Item.h"
 #include "TestProject/DebugMacros.h"
 #include "Components/SphereComponent.h"
-#include "Characters/ParagonPhase/ParagonPhase.h"
+#include "Interfaces/PickupInterface.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -22,8 +24,8 @@ AItem::AItem()
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
 
-	EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
-	EmbersEffect->SetupAttachment(GetRootComponent());
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
+	ItemEffect->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
@@ -82,32 +84,36 @@ float AItem::TransformedCos()
 
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AParagonPhase* ParagonPhase = Cast<AParagonPhase>(OtherActor);
-	if (ParagonPhase)
+	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterface)
 	{
-		ParagonPhase->SetOverlappingItem(this);
+		PickupInterface->SetOverlappingItem(this);
 	}
-
-	/*const FString OtherActorName = OtherActor->GetName();
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, 30.f, FColor::Red, OtherActorName);
-	}*/
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	AParagonPhase* ParagonPhase = Cast<AParagonPhase>(OtherActor);
-	if (ParagonPhase)
+	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterface)
 	{
-		ParagonPhase->SetOverlappingItem(nullptr);
+		PickupInterface->SetOverlappingItem(nullptr);
 	}
+}
 
-	/*const FString LeaveOtherActor = "Left: " + OtherActor->GetName();
-	if (GEngine)
+void AItem::SpawnPickupSystem()
+{
+	if (PickupEffect)
 	{
-		GEngine->AddOnScreenDebugMessage(1, 30.f, FColor::Red, LeaveOtherActor);
-	}*/
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation());
+	}
+}
+
+void AItem::SpawnPickupSound()
+{
+	if (PickupSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, PickupSound, GetActorLocation());
+	}
 }
 
 // Called every frame

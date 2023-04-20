@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterface.h"
-#include "ParagonPhase/CharacterTypes.h"
 #include "InputActionValue.h"
+#include "Characters/ParagonPhase/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
 class UAnimMontage;
@@ -25,6 +25,7 @@ public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;	
 	virtual void SetTargetCursorVisibility(bool Enabled);
+	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
 
 protected:
 	
@@ -50,11 +51,13 @@ protected:
 	virtual void HandleDamage(float DamageAmount);
 	virtual int32 PlayAttackMontage(UAnimMontage* Montage, TArray<FName> Sections);
 	virtual int32 PlayDeathMontage();
+	virtual void PlayDodgeMontage();
 	void StopAttackMontage();
 	void DisableCapsule();
 	virtual bool CanAttack();
 	bool IsAlive();
 	virtual void FocusTarget();
+	void DisableMeshCollision();
 
 	UFUNCTION(BlueprintCallable)
 		virtual FVector GetRotationWarpTarget(AActor* Actor);
@@ -69,6 +72,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		virtual void AttackEnd();
+
+	UFUNCTION(BlueprintCallable)
+		virtual void DodgeEnd();
 
 	UPROPERTY(VisibleAnywhere)
 		UTargetCursorWidgetComponent* TargetCursor;
@@ -133,6 +139,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		AActor* SelectedTarget;
 
+	UPROPERTY(BlueprintReadOnly)
+		TEnumAsByte<EDeathPose> DeathPose;
+
 private:
 
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
@@ -158,6 +167,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		UAnimMontage* DeathMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+		UAnimMontage* DodgeMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		TArray<FName> DeathMontageSections;

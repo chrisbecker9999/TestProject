@@ -32,19 +32,17 @@ protected:
 	virtual void BeginPlay() override;
 	void WaitForNavMeshLoad();
 	virtual void Die() override;
+	void SpawnSoul();
+	void SpawnHealthPotion();
 	virtual void Attack() override;
 	virtual bool CanAttack() override;
 	virtual void AttackEnd() override;
 	virtual void HandleDamage(float DamageAmount) override;
-	virtual int32 PlayDeathMontage() override;
 	virtual FVector GetRotationWarpTarget(AActor* Actor) override;
 	virtual FVector GetTranslationWarpTarget(AActor* Actor) override;
 
 	UPROPERTY(BlueprintReadOnly)
-		TEnumAsByte<EDeathPose> DeathPose;
-
-	UPROPERTY(BlueprintReadOnly)
-		EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 private:
 
@@ -126,5 +124,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		float DeathLifeSpan = 8.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TSubclassOf<class ASoul> SoulClass;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TSubclassOf<class AHealthPotion> HealthPotionClass;
 
 };
